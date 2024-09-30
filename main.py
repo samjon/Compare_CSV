@@ -77,11 +77,3 @@ if not differences.empty:
 
 else:
     sys.exit()
-
-
-
-
-
-
-
-
