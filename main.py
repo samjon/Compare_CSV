@@ -18,22 +18,31 @@ files.sort(key=lambda x: os.path.getmtime(x))
 
 # Проверяем, что найдено как минимум два файла
 if len(files) < 2:
+    print("Недостаточно файлов для сравнения.")
     sys.exit()
 else:
     # Получаем два последних файла
     latest_file = files[-1]
     previous_file = files[-2]
 
-    # Читаем файлы в DataFrame
-    df_latest = pd.read_csv(latest_file)
-    df_previous = pd.read_csv(previous_file)
+    # Читаем файлы в DataFrame, указывая разделитель
+    try:
+        df_latest = pd.read_csv(latest_file, sep=';')  # Укажите правильный разделитель здесь
+        df_previous = pd.read_csv(previous_file, sep=';')  # Укажите правильный разделитель здесь
 
-    # Сравнение DataFrame
-    differences = df_previous.compare(df_latest)
+        # Сброс индексов для сравнения без учета индексов
+        df_latest_reset = df_latest.reset_index(drop=True)
+        df_previous_reset = df_previous.reset_index(drop=True)
+
+        # Находим различия между двумя DataFrame с учетом всех строк
+        differences = pd.concat([df_previous_reset, df_latest_reset]).drop_duplicates(keep=False)
+
+    except Exception as e:
+        print(f"Ошибка при чтении файлов: {e}")
+        sys.exit()
 
 # Проверка наличия различий
 if not differences.empty:
-
     # Сохранение различий в файл
     differences.to_csv('differences_report.csv', index=False)
 
@@ -71,9 +80,9 @@ if not differences.empty:
     # Удаление файла после отправки
     os.remove('differences_report.csv')
 
-    # Удаляем каждый файл с расширением .csv
+    # Удаляем каждый файл с расширением .csv после обработки (включая последние два)
     for file in files:
         os.remove(file)
 
 else:
-    sys.exit()
+    print("Нет различий. Программа завершена.")
